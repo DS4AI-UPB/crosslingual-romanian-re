@@ -1,0 +1,11 @@
+{
+  "experiment": "A",
+  "mode": "few-shot-1",
+  "lang": "en",
+  "model": "/export/home/acs/prof/dragos.vasile2603/synasc2026/models/gemma-4-31b-it",
+  "metrics": {
+    "macro_f1": 0.641914237589635,
+    "accuracy": 0.6827383143172617,
+    "total": 2717
+  }
+}

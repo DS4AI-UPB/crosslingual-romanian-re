@@ -1,0 +1,37 @@
+# Adapters and large model files (hosted on Hugging Face, not Git)
+adapters/
+*.safetensors
+*.bin
+*.pt
+*.pth
+
+# Intermediate training checkpoints
+checkpoint-*/
+**/checkpoint-*/
+
+# SLURM logs
+slurm_*.out
+*.err
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+venv/
+.venv/
+
+# Caches
+unsloth_compiled_cache/
+.cache/
+*.lock
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+hf_dataset/

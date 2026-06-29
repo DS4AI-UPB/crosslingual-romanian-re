@@ -1,0 +1,12 @@
+{
+  "experiment": "B",
+  "mode": "qlora",
+  "lang": "ro",
+  "model": "/export/home/acs/prof/dragos.vasile2603/synasc2026/models/gemma-4-31b-it-lora-e2e",
+  "metrics": {
+    "exact_match": 0.6741741741741741,
+    "relation_match": 0.808933933933934,
+    "entity_match": 0.7507507507507507,
+    "total": 2664
+  }
+}

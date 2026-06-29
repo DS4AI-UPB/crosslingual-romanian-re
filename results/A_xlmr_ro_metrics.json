@@ -1,0 +1,11 @@
+{
+  "experiment": "A",
+  "mode": "xlmr",
+  "lang": "ro",
+  "model": "xlm-roberta-large",
+  "metrics": {
+    "macro_f1": 0.8567525250853922,
+    "accuracy": 0.8475975975975976,
+    "total": 2664
+  }
+}

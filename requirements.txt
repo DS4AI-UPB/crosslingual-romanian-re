@@ -1,0 +1,30 @@
+# ─────────────────────────────────────────────────────────────
+# Inference (running infer_classification.py / infer_e2e.py)
+# These are enough to load the adapters from the Hugging Face Hub
+# on top of the base Gemma 4 31B model and run predictions.
+# ─────────────────────────────────────────────────────────────
+torch>=2.4
+transformers>=4.45
+peft>=0.13
+bitsandbytes>=0.43
+accelerate>=0.34
+sentencepiece
+scikit-learn        # only needed for the evaluation / significance scripts
+
+# ─────────────────────────────────────────────────────────────
+# Reproducing the experiments (training the adapters and baselines)
+# The exact versions below match the environment used in the paper.
+# QLoRA training uses Unsloth; encoder baselines use transformers.
+# Uncomment if you want to reproduce training rather than just run inference.
+# ─────────────────────────────────────────────────────────────
+# unsloth==2026.4.8
+# trl
+# datasets
+# vllm==0.19.1          # optional, for faster batched inference
+
+# Notes:
+# - The base model google/gemma-4-31b-it is gated; accept its license on the
+#   Hugging Face Hub and log in with `hf auth login` before downloading.
+# - 4-bit inference of the 31B model needs roughly 25 GB of GPU memory.
+# - The exact paper environment used transformers 5.5.0 and torch 2.10.0+cu128
+#   on a single NVIDIA A100 40GB; the looser pins above are for portability.

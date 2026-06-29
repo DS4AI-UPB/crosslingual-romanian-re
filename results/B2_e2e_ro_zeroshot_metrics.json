@@ -1,0 +1,12 @@
+{
+  "experiment": "B",
+  "mode": "zero-shot",
+  "lang": "ro",
+  "model": "/export/home/acs/prof/dragos.vasile2603/synasc2026/models/gemma-4-31b-it",
+  "metrics": {
+    "exact_match": 0.28453453453453453,
+    "relation_match": 0.5367867867867868,
+    "entity_match": 0.41216216216216217,
+    "total": 2664
+  }
+}

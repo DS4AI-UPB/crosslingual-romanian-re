@@ -1,0 +1,11 @@
+{
+  "experiment": "A",
+  "mode": "bert-ro-base",
+  "lang": "ro",
+  "model": "dumitrescustefan/bert-base-romanian-cased-v1",
+  "metrics": {
+    "macro_f1": 0.8236791289699728,
+    "accuracy": 0.8123123123123123,
+    "total": 2664
+  }
+}

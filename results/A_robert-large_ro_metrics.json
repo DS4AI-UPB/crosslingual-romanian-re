@@ -1,0 +1,11 @@
+{
+  "experiment": "A",
+  "mode": "robert-large",
+  "lang": "ro",
+  "model": "readerbench/RoBERT-large",
+  "metrics": {
+    "macro_f1": 0.8439557428519493,
+    "accuracy": 0.8337087087087087,
+    "total": 2664
+  }
+}
