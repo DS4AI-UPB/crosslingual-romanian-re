@@ -1,6 +1,6 @@
 # Cross-lingual Relation Extraction for Romanian
 
-Code, data, and trained adapters for the paper **"Cross-lingual Relation Extraction with Large Language Models: Zero-Shot, Few-Shot, and Fine-Tuned Evaluation on Romanian"** (SYNASC 2026).
+Code, data, and trained models for the paper **"Cross-lingual Relation Extraction with Large Language Models: Zero-Shot, Few-Shot, and Fine-Tuned Evaluation on Romanian"** (SYNASC 2026).
 
 We translate the SemEval-2010 Task 8 relation extraction benchmark from English to Romanian and evaluate Gemma 4 31B (zero-shot, few-shot, and QLoRA fine-tuned) against four encoder baselines, under two task formulations: Relation Classification and End-to-End RE.
 
@@ -10,14 +10,46 @@ We translate the SemEval-2010 Task 8 relation extraction benchmark from English 
 - On **End-to-End RE**, where entities are not given, the fine-tuned LLM has a clear advantage: QLoRA raises exact match by about 39pp over zero-shot in both languages, and encoder classifiers do not apply directly.
 - QLoRA fine-tuning narrows the English-Romanian gap from 3.3pp to 1.4pp on classification.
 
-## Quick start: run inference
+## Released models
 
-The two QLoRA adapters are on the Hugging Face Hub. The inference scripts download the adapter and apply it on top of the base Gemma 4 31B model (4-bit, about 25 GB of GPU memory).
+All trained models are on the Hugging Face Hub under [DS4AI-UPB](https://huggingface.co/DS4AI-UPB).
+
+**QLoRA adapters** for `google/gemma-4-31b-it`:
+
+| Task | Repo |
+|------|------|
+| Relation Classification | [`DS4AI-UPB/gemma4-ro-re-lora`](https://huggingface.co/DS4AI-UPB/gemma4-ro-re-lora) |
+| End-to-End RE | [`DS4AI-UPB/gemma4-ro-e2e-lora`](https://huggingface.co/DS4AI-UPB/gemma4-ro-e2e-lora) |
+
+**Encoder baselines** for Relation Classification (much smaller and faster, run on a small GPU or CPU):
+
+| Model | Params | Languages | Repo |
+|-------|--------|-----------|------|
+| XLM-RoBERTa-large | 560M | RO + EN | [`DS4AI-UPB/xlmr-large-ro-re`](https://huggingface.co/DS4AI-UPB/xlmr-large-ro-re) |
+| XLM-RoBERTa-base | 278M | RO + EN | [`DS4AI-UPB/xlmr-base-ro-re`](https://huggingface.co/DS4AI-UPB/xlmr-base-ro-re) |
+| RoBERT-large | 340M | RO | [`DS4AI-UPB/robert-large-ro-re`](https://huggingface.co/DS4AI-UPB/robert-large-ro-re) |
+| BERT-base-Romanian | 125M | RO | [`DS4AI-UPB/bert-base-romanian-re`](https://huggingface.co/DS4AI-UPB/bert-base-romanian-re) |
+
+**Dataset:** [`DS4AI-UPB/romanian-re-semeval`](https://huggingface.co/datasets/DS4AI-UPB/romanian-re-semeval)
+
+## Quick start: run inference
 
 ```bash
 pip install -r requirements.txt
 hf auth login   # the base model google/gemma-4-31b-it is gated
+```
 
+**Encoder (lightweight, recommended for Relation Classification):**
+
+```bash
+python scripts/infer_encoder.py \
+    --sentence "<e1>Furtuna</e1> a provocat mari <e2>pagube</e2>." \
+    --model DS4AI-UPB/xlmr-large-ro-re
+```
+
+**Gemma QLoRA adapter** (downloads the 31B base model, about 25 GB of GPU memory):
+
+```bash
 # Relation Classification: the sentence already has <e1> and <e2> markers
 python infer_classification.py \
     --sentence "<e1>Zahărul</e1> a fost dizolvat în <e2>apă</e2>." \
@@ -29,16 +61,14 @@ python infer_e2e.py \
     --adapter DS4AI-UPB/gemma4-ro-e2e-lora
 ```
 
-Both scripts also take `--file sentences.txt` (one sentence per line) and accept a
-**local folder** instead of a Hub id for `--adapter`, so a model you trained
-yourself works the same way.
+All three inference scripts also take `--file sentences.txt` (one sentence per line), and the model argument accepts a **local folder** instead of a Hub id, so a model you trained yourself works the same way.
 
 ## Repository structure
 
 ```
 .
-├── infer_classification.py    # Run the classification adapter (HF or local)
-├── infer_e2e.py               # Run the end-to-end adapter (HF or local)
+├── infer_classification.py    # Run the Gemma classification adapter (HF or local)
+├── infer_e2e.py               # Run the Gemma end-to-end adapter (HF or local)
 ├── requirements.txt
 ├── data/                      # Translated Romanian dataset + English source
 │   ├── train_ro_clean.jsonl
@@ -51,14 +81,11 @@ yourself works the same way.
 │   ├── train_classification.py       # QLoRA classification training
 │   ├── train_e2e.py                  # QLoRA end-to-end training
 │   ├── train_encoder_baseline.py     # Encoder baselines (validation-based selection)
+│   ├── infer_encoder.py              # Run an encoder baseline (HF or local)
 │   ├── eval_classification.py        # Evaluate the classification adapter
 │   ├── eval_e2e.py                   # Evaluate the end-to-end adapter
 │   └── significance_test.py          # Paired bootstrap significance test
 ├── results/                   # Predictions (.jsonl) + metrics (.json)
-│   ├── A_*.jsonl                     # Relation Classification predictions
-│   ├── B_*.jsonl                     # End-to-End RE predictions
-│   ├── translation_sample_100.jsonl  # Manually inspected translation sample
-│   └── bootstrap_results.txt         # Significance test output
 └── README.md
 ```
 
@@ -77,14 +104,7 @@ Each line is a JSON object. Romanian files keep both the English source and the 
 
 The dataset is **machine-translated with automatic post-validation**, not a human gold standard. A manual inspection of 100 sentences found that 74% have both entities translated and aligned correctly; the remaining 26% have entity-level issues (14 untranslated entities, 9 misplaced markers, 3 mistranslations), 12 of them severe. Romanian End-to-End RE numbers should be read as a lower bound. See the paper, Section "Dataset Construction", for details.
 
-## Trained adapters
-
-The QLoRA adapters for `google/gemma-4-31b-it` are on the Hugging Face Hub:
-
-- **Relation Classification:** [`DS4AI-UPB/gemma4-ro-re-lora`](https://huggingface.co/DS4AI-UPB/gemma4-ro-re-lora)
-- **End-to-End RE:** [`DS4AI-UPB/gemma4-ro-e2e-lora`](https://huggingface.co/DS4AI-UPB/gemma4-ro-e2e-lora)
-
-The base model (`google/gemma-4-31b-it`) is not redistributed here; download it from its official source. The encoder baselines are not distributed either, since they are reproducible from `scripts/train_encoder_baseline.py`.
+The same data is on the Hub as [`DS4AI-UPB/romanian-re-semeval`](https://huggingface.co/datasets/DS4AI-UPB/romanian-re-semeval), loadable with `load_dataset("DS4AI-UPB/romanian-re-semeval")`.
 
 ## Reproducing the experiments
 
@@ -92,7 +112,7 @@ All experiments run on a single NVIDIA A100 40GB. QLoRA training uses Unsloth; t
 
 ```bash
 # 1. Convert the original SemEval-2010 Task 8 .txt files to JSONL
-python scripts/convert_semeval_to_jsonl.py
+python scripts/convert_semeval_to_jsonl.py --input TRAIN_FILE.TXT --output data/train_en.jsonl
 
 # 2. Zero-shot / few-shot inference with the base Gemma 4
 python scripts/run_inference.py --help
@@ -114,6 +134,8 @@ python scripts/eval_e2e.py --adapter models/gemma4-ro-e2e-lora
 # 6. Significance testing
 python scripts/significance_test.py --a results/A_qlora_ro.jsonl --b results/A_xlmr_ro.jsonl
 ```
+
+The base model (`google/gemma-4-31b-it`) is not redistributed here; download it from its official source.
 
 ## Citation
 
