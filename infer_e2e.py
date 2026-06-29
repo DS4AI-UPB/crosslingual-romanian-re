@@ -105,7 +105,7 @@ def predict(model, tokenizer, sentence):
     input_text = tokenizer.apply_chat_template(
         messages, tokenize=False, add_generation_prompt=True
     )
-    inputs = tokenizer(input_text, return_tensors="pt").to(model.device)
+    inputs = tokenizer(text=input_text, return_tensors="pt").to(model.device)
     output_ids = model.generate(
         **inputs,
         max_new_tokens=96,
