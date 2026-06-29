@@ -118,11 +118,11 @@ python scripts/significance_test.py --a results/A_qlora_ro.jsonl --b results/A_x
 ## Citation
 
 ```bibtex
-@inproceedings{vasile2026crosslingual,
-  title     = {Cross-lingual Relation Extraction with Large Language Models: Zero-Shot, Few-Shot, and Fine-Tuned Evaluation on Romanian},
-  author    = {Vasile, Drago\c{s}-Mitru\c{t} and Apostol, Elena-Simona and Truic\u{a}, Ciprian-Octavian and Toma, \c{S}tefan-Adrian},
-  booktitle = {Proceedings of the International Symposium on Symbolic and Numeric Algorithms for Scientific Computing (SYNASC)},
-  year      = {2026}
+@misc{vasile2026crosslingual,
+  title  = {Cross-lingual Relation Extraction with Large Language Models: Zero-Shot, Few-Shot, and Fine-Tuned Evaluation on Romanian},
+  author = {Vasile, Drago\c{s}-Mitru\c{t} and Apostol, Elena-Simona and Toma, \c{S}tefan-Adrian and Truic\u{a}, Ciprian-Octavian},
+  year   = {2026},
+  note   = {Preprint}
 }
 ```
 
