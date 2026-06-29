@@ -2,12 +2,12 @@
 """
 Relation Classification inference with the QLoRA Gemma 4 adapter.
 
-Loads the fine-tuned adapter from the Hugging Face Hub (or a local folder)
-on top of the base Gemma 4 31B model, and predicts the directional relation
-between two marked entities <e1> and <e2> in a sentence.
+Loads the fine-tuned adapter (from the Hugging Face Hub or a local folder) with
+Unsloth, the same stack used for training and evaluation in the paper, and
+predicts the directional relation between the two marked entities <e1> and <e2>.
 
-This is the "Relation Classification" task from the paper: the entity tags are
-already present in the input, and the model picks one of the ten relations.
+This is the "Relation Classification" task: the entity tags are already present
+in the input, and the model picks one of the ten relations.
 
 Example:
     python infer_classification.py \
@@ -19,7 +19,7 @@ Example:
         --adapter DS4AI-UPB/gemma4-ro-re-lora
 
 Requirements:
-    pip install torch transformers peft bitsandbytes accelerate
+    pip install unsloth
 """
 
 import argparse
@@ -27,25 +27,16 @@ import re
 import sys
 
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
-from peft import PeftModel
+from unsloth import FastModel
 
-BASE_MODEL = "google/gemma-4-31b-it"
+MAX_SEQ_LEN = 512
 
 RELATIONS = [
-    "Cause-Effect",
-    "Instrument-Agency",
-    "Product-Producer",
-    "Content-Container",
-    "Entity-Origin",
-    "Entity-Destination",
-    "Component-Whole",
-    "Member-Collection",
-    "Message-Topic",
-    "Other",
+    "Cause-Effect", "Instrument-Agency", "Product-Producer",
+    "Content-Container", "Entity-Origin", "Entity-Destination",
+    "Component-Whole", "Member-Collection", "Message-Topic", "Other",
 ]
 
-# Matches predictions such as "Cause-Effect(e1,e2)" and captures the direction.
 RELATION_PATTERN = re.compile(
     r"(" + "|".join(re.escape(r) for r in RELATIONS) + r")"
     r"(?:\((e[12]),\s*(e[12])\))?"
@@ -74,31 +65,21 @@ def parse_prediction(text):
     return "Other"
 
 
-def load_model(adapter, base_model):
-    """Load the base model in 4-bit and apply the LoRA adapter."""
-    print(f"Loading base model: {base_model}", file=sys.stderr)
-    quant_config = BitsAndBytesConfig(
+def load_model(adapter):
+    """Load base + LoRA adapter together with Unsloth (4-bit)."""
+    print(f"Loading model + adapter: {adapter}", file=sys.stderr)
+    model, tokenizer = FastModel.from_pretrained(
+        adapter,
+        max_seq_length=MAX_SEQ_LEN,
         load_in_4bit=True,
-        bnb_4bit_compute_dtype=torch.bfloat16,
-        bnb_4bit_quant_type="nf4",
+        dtype=torch.bfloat16,
     )
-    model = AutoModelForCausalLM.from_pretrained(
-        base_model,
-        quantization_config=quant_config,
-        torch_dtype=torch.bfloat16,
-        device_map="auto",
-    )
-    print(f"Applying adapter: {adapter}", file=sys.stderr)
-    model = PeftModel.from_pretrained(model, adapter)
-    model.eval()
-
-    tokenizer = AutoTokenizer.from_pretrained(adapter)
+    FastModel.for_inference(model)
     return model, tokenizer
 
 
 @torch.no_grad()
 def predict(model, tokenizer, sentence):
-    """Predict the relation for a single sentence."""
     prompt = build_prompt(sentence)
     messages = [{"role": "user", "content": prompt}]
     input_text = tokenizer.apply_chat_template(
@@ -124,11 +105,9 @@ def main():
     src.add_argument("--file", help="A text file with one marked sentence per line.")
     parser.add_argument("--adapter", default="DS4AI-UPB/gemma4-ro-re-lora",
                         help="HF repo id or local path of the LoRA adapter.")
-    parser.add_argument("--base-model", default=BASE_MODEL,
-                        help="Base model id (default: google/gemma-4-31b-it).")
     args = parser.parse_args()
 
-    model, tokenizer = load_model(args.adapter, args.base_model)
+    model, tokenizer = load_model(args.adapter)
 
     if args.sentence:
         sentences = [args.sentence]

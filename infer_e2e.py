@@ -2,12 +2,12 @@
 """
 End-to-End Relation Extraction inference with the QLoRA Gemma 4 adapter.
 
-Loads the fine-tuned end-to-end adapter from the Hugging Face Hub (or a local
-folder) on top of the base Gemma 4 31B model. Unlike the classification script,
-the input is a plain sentence with no entity markers: the model extracts both
-entities and the relation between them, and returns them as JSON.
+Loads the fine-tuned end-to-end adapter (from the Hugging Face Hub or a local
+folder) with Unsloth, the same stack used for training and evaluation in the
+paper. The input is a plain sentence with no entity markers: the model extracts
+both entities and the relation between them, and returns them as JSON.
 
-This is the "End-to-End RE" task from the paper.
+This is the "End-to-End RE" task.
 
 Example:
     python infer_e2e.py \
@@ -19,7 +19,7 @@ Example:
         --adapter DS4AI-UPB/gemma4-ro-e2e-lora
 
 Requirements:
-    pip install torch transformers peft bitsandbytes accelerate
+    pip install unsloth
 """
 
 import argparse
@@ -28,10 +28,9 @@ import re
 import sys
 
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
-from peft import PeftModel
+from unsloth import FastModel
 
-BASE_MODEL = "google/gemma-4-31b-it"
+MAX_SEQ_LEN = 640
 
 RELATIONS = [
     "Cause-Effect", "Instrument-Agency", "Product-Producer",
@@ -68,13 +67,11 @@ def relations_block():
 
 
 def build_prompt(sentence):
-    # Strip any entity markers if the user left them in; e2e expects plain text.
     sentence = re.sub(r"</?e[12]>", "", sentence)
     return PROMPT_E2E.format(relations=relations_block(), sentence=sentence)
 
 
 def parse_response(response):
-    """Extract {e1, e2, relation} from the JSON the model returns."""
     try:
         m = re.search(r"\{.*\}", response, re.DOTALL)
         if m:
@@ -89,24 +86,15 @@ def parse_response(response):
     return {"e1": "", "e2": "", "relation": response.strip()}
 
 
-def load_model(adapter, base_model):
-    print(f"Loading base model: {base_model}", file=sys.stderr)
-    quant_config = BitsAndBytesConfig(
+def load_model(adapter):
+    print(f"Loading model + adapter: {adapter}", file=sys.stderr)
+    model, tokenizer = FastModel.from_pretrained(
+        adapter,
+        max_seq_length=MAX_SEQ_LEN,
         load_in_4bit=True,
-        bnb_4bit_compute_dtype=torch.bfloat16,
-        bnb_4bit_quant_type="nf4",
+        dtype=torch.bfloat16,
     )
-    model = AutoModelForCausalLM.from_pretrained(
-        base_model,
-        quantization_config=quant_config,
-        torch_dtype=torch.bfloat16,
-        device_map="auto",
-    )
-    print(f"Applying adapter: {adapter}", file=sys.stderr)
-    model = PeftModel.from_pretrained(model, adapter)
-    model.eval()
-
-    tokenizer = AutoTokenizer.from_pretrained(adapter)
+    FastModel.for_inference(model)
     return model, tokenizer
 
 
@@ -137,11 +125,9 @@ def main():
     src.add_argument("--file", help="A text file with one sentence per line.")
     parser.add_argument("--adapter", default="DS4AI-UPB/gemma4-ro-e2e-lora",
                         help="HF repo id or local path of the end-to-end adapter.")
-    parser.add_argument("--base-model", default=BASE_MODEL,
-                        help="Base model id (default: google/gemma-4-31b-it).")
     args = parser.parse_args()
 
-    model, tokenizer = load_model(args.adapter, args.base_model)
+    model, tokenizer = load_model(args.adapter)
 
     if args.sentence:
         sentences = [args.sentence]
