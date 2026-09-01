@@ -1,0 +1,11 @@
+{
+  "experiment": "A",
+  "mode": "qlora",
+  "lang": "ro",
+  "model": "models/qwen25-ro-re-lora",
+  "metrics": {
+    "macro_f1": 0.8640356055764602,
+    "accuracy": 0.8528528528528528,
+    "total": 2664
+  }
+}

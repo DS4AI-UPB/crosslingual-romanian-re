@@ -2,24 +2,34 @@
 
 Code, data, and trained models for the paper **"Cross-lingual Relation Extraction with Large Language Models: Zero-Shot, Few-Shot, and Fine-Tuned Evaluation on Romanian"** (SYNASC 2026).
 
-We translate the SemEval-2010 Task 8 relation extraction benchmark from English to Romanian and evaluate Gemma 4 31B (zero-shot, few-shot, and QLoRA fine-tuned) against four encoder baselines, under two task formulations: Relation Classification and End-to-End RE.
+We translate the SemEval-2010 Task 8 relation extraction benchmark from English to Romanian and evaluate two open-weight LLMs, Gemma 4 31B and Qwen 2.5 32B (zero-shot, few-shot, and QLoRA fine-tuned), against four encoder baselines and a two-encoder pipeline baseline, under two task formulations: Relation Classification and End-to-End RE.
 
 ## Main findings
 
-- On **Relation Classification**, a fine-tuned XLM-RoBERTa-large (560M) is statistically indistinguishable from QLoRA Gemma 4 (31B) on both English (p = 0.23) and Romanian (p = 0.09), despite being roughly 55x smaller.
-- On **End-to-End RE**, where entities are not given, the fine-tuned LLM has a clear advantage: QLoRA raises exact match by about 39pp over zero-shot in both languages, and encoder classifiers do not apply directly.
-- QLoRA fine-tuning narrows the English-Romanian gap from 3.3pp to 1.4pp on classification.
+- On **Relation Classification**, a fine-tuned XLM-RoBERTa-large (560M) is statistically indistinguishable from both QLoRA LLMs on Romanian (vs Gemma p = 0.09, vs Qwen p = 0.13), despite being roughly 55x smaller.
+- **Prompt-only performance is model-dependent:** Gemma and Qwen differ by 33pp zero-shot, but converge to within 1pp after QLoRA, both landing at the encoder ceiling.
+- On **End-to-End RE**, a two-encoder pipeline (a span detector plus the relation classifier) matches the stronger LLM on exact match (vs Gemma: not significant on either language) and beats the weaker one (vs Qwen: p < 0.005), while being far smaller. The apparent LLM advantage on end-to-end does not survive a matched baseline.
+- The cross-lingual gap is not distinguishable from zero in prompt-only settings once exemplar-sampling variance is accounted for; after fine-tuning it is 1.4pp for Gemma and 2.6pp for Qwen.
 
 ## Released models
 
 All trained models are on the Hugging Face Hub under [DS4AI-UPB](https://huggingface.co/DS4AI-UPB).
 
-**QLoRA adapters** for `google/gemma-4-31b-it`:
+**QLoRA adapters** for `google/gemma-4-31b-it` and `Qwen/Qwen2.5-32B-Instruct`:
 
-| Task | Repo |
-|------|------|
-| Relation Classification | [`DS4AI-UPB/gemma4-ro-re-lora`](https://huggingface.co/DS4AI-UPB/gemma4-ro-re-lora) |
-| End-to-End RE | [`DS4AI-UPB/gemma4-ro-e2e-lora`](https://huggingface.co/DS4AI-UPB/gemma4-ro-e2e-lora) |
+| Task | Base | Repo |
+|------|------|------|
+| Relation Classification | Gemma 4 | [`DS4AI-UPB/gemma4-ro-re-lora`](https://huggingface.co/DS4AI-UPB/gemma4-ro-re-lora) |
+| End-to-End RE | Gemma 4 | [`DS4AI-UPB/gemma4-ro-e2e-lora`](https://huggingface.co/DS4AI-UPB/gemma4-ro-e2e-lora) |
+| Relation Classification | Qwen 2.5 | [`DS4AI-UPB/qwen25-ro-re-lora`](https://huggingface.co/DS4AI-UPB/qwen25-ro-re-lora) |
+| End-to-End RE | Qwen 2.5 | [`DS4AI-UPB/qwen25-ro-e2e-lora`](https://huggingface.co/DS4AI-UPB/qwen25-ro-e2e-lora) |
+
+**Span detectors** for the end-to-end pipeline baseline (XLM-RoBERTa-large, token classification):
+
+| Language | Repo |
+|----------|------|
+| Romanian | [`DS4AI-UPB/span-detector-ro`](https://huggingface.co/DS4AI-UPB/span-detector-ro) |
+| English  | [`DS4AI-UPB/span-detector-en`](https://huggingface.co/DS4AI-UPB/span-detector-en) |
 
 **Encoder baselines** for Relation Classification (much smaller and faster, run on a small GPU or CPU):
 
@@ -136,6 +146,18 @@ python scripts/significance_test.py --a results/A_qlora_ro.jsonl --b results/A_x
 ```
 
 The base model (`google/gemma-4-31b-it`) is not redistributed here; download it from its official source.
+
+## Reproducing the analysis
+
+The `scripts/` directory contains the full evaluation pipeline:
+
+- `train_span_detector.py` / `pipeline_e2e.py` - train the BIO span detector and run the end-to-end encoder pipeline baseline.
+- `significance_e2e.py` / `significance_test.py` - paired bootstrap tests (10,000 resamples) for end-to-end and classification.
+- `aggregate_variance.py` / `paired_gap.py` - few-shot variance across exemplar draws and the cross-lingual gap.
+- `per_relation.py` - per-relation F1-Score across models.
+- `clean_subset_eval.py` - end-to-end scores on the subset excluding untranslated entities.
+
+Per-model predictions and metrics are in `results/` (Gemma + encoders) and `results_qwen/` (Qwen).
 
 ## Citation
 

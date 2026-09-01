@@ -1,0 +1,12 @@
+{
+  "experiment": "B",
+  "mode": "zero-shot",
+  "lang": "ro",
+  "model": "models/qwen2.5-32b-instruct",
+  "metrics": {
+    "exact_match": 0.23686186186186187,
+    "relation_match": 0.4027777777777778,
+    "entity_match": 0.42454954954954954,
+    "total": 2664
+  }
+}

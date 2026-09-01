@@ -1,0 +1,11 @@
+{
+  "experiment": "A",
+  "mode": "few-shot-3",
+  "lang": "ro",
+  "model": "models/qwen2.5-32b-instruct",
+  "metrics": {
+    "macro_f1": 0.3658480845795092,
+    "accuracy": 0.44481981981981983,
+    "total": 2664
+  }
+}

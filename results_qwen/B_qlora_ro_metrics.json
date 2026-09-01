@@ -1,0 +1,12 @@
+{
+  "experiment": "B",
+  "mode": "qlora",
+  "lang": "ro",
+  "model": "models/qwen25-ro-e2e-lora",
+  "metrics": {
+    "exact_match": 0.6411411411411412,
+    "relation_match": 0.7875375375375375,
+    "entity_match": 0.7218468468468469,
+    "total": 2664
+  }
+}

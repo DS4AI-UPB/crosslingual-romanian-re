@@ -1,0 +1,12 @@
+{
+  "experiment": "B",
+  "mode": "few-shot-1",
+  "lang": "ro",
+  "model": "google/gemma-4-31B-it",
+  "metrics": {
+    "exact_match": 0.30255255255255253,
+    "relation_match": 0.5671921921921922,
+    "entity_match": 0.4271771771771772,
+    "total": 2664
+  }
+}
