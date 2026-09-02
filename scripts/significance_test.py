@@ -91,18 +91,18 @@ def main():
     # Paired bootstrap: resample test instances with replacement,
     # recompute the difference each time.
     diffs = []
-    count_le_zero = 0
     for _ in range(args.n_boot):
         idx = [random.randrange(n) for _ in range(n)]
         d = macro_f1(golds_a, preds_a, idx) - macro_f1(golds_b, preds_b, idx)
         diffs.append(d)
-        if (observed_diff > 0 and d <= 0) or (observed_diff < 0 and d >= 0):
-            count_le_zero += 1
 
     diffs.sort()
     lo = diffs[int(0.025 * args.n_boot)]
     hi = diffs[int(0.975 * args.n_boot)]
-    p_value = count_le_zero / args.n_boot
+    # two-sided p-value: center the bootstrap distribution at zero (H0),
+    # count resamples at least as extreme as the observed difference.
+    centered = [d - observed_diff for d in diffs]
+    p_value = sum(1 for d in centered if abs(d) >= abs(observed_diff)) / args.n_boot
 
     print(f"\n95% CI for the difference: [{lo:.4f}, {hi:.4f}]")
     print(f"Bootstrap p-value (two-sided, H0: diff = 0): {p_value:.4f}")
