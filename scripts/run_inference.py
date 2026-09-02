@@ -190,10 +190,7 @@ def generate_response(model, tokenizer, prompt: str, max_new_tokens: int = 128) 
         outputs = model.generate(
             **inputs,
             max_new_tokens=max_new_tokens,
-            temperature=0.1,
-            top_p=0.95,
-            top_k=64,
-            do_sample=True,
+            do_sample=False,
             repetition_penalty=1.0,
         )
 
@@ -285,8 +282,8 @@ def evaluate_e2e(predictions: list[dict]) -> dict:
 
         # Exact match: both entities + relation correct
         rel_match = gold_rel.split("(")[0] == pred_rel.split("(")[0] if gold_rel and pred_rel else False
-        e1_match = gold_e1 in pred_e1 or pred_e1 in gold_e1
-        e2_match = gold_e2 in pred_e2 or pred_e2 in gold_e2
+        e1_match = bool(pred_e1) and (gold_e1 in pred_e1 or pred_e1 in gold_e1)
+        e2_match = bool(pred_e2) and (gold_e2 in pred_e2 or pred_e2 in gold_e2)
 
         if rel_match and e1_match and e2_match:
             exact += 1
@@ -357,6 +354,8 @@ def main():
                         help="Model path or HF model ID")
     parser.add_argument("--quantize", choices=["4bit", "8bit", "none"], default="4bit")
     parser.add_argument("--limit", type=int, default=0, help="Process only first N entries")
+    parser.add_argument("--seed", type=int, default=42,
+                        help="Seed for few-shot exemplar sampling (vary it for variance analysis)")
     parser.add_argument("--batch-size", type=int, default=1, help="Not used yet (sequential)")
     args = parser.parse_args()
 
@@ -375,7 +374,7 @@ def main():
             print("ERROR: --train required for few-shot mode")
             sys.exit(1)
         train_data = load_data(args.train)
-        few_shot_examples = select_few_shot_examples(train_data, n_shots)
+        few_shot_examples = select_few_shot_examples(train_data, n_shots, seed=args.seed)
         print(f"  Selected {len(few_shot_examples)} few-shot examples")
 
     # ── Load model ──

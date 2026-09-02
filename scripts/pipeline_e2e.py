@@ -13,7 +13,7 @@ and the metric scripts work unchanged.
     python pipeline_e2e.py \
         --test data/test_ro_clean.jsonl --lang ro \
         --detector models/span-detector-ro \
-        --classifier models/xlmr-large-re/checkpoint-3968/checkpoint-3968 \
+        --classifier models/xlmr-large-re/checkpoint-3968 \
         --output results/B_pipeline_ro.jsonl
 """
 import argparse, json, re
